@@ -1,8 +1,8 @@
-
-
+# Import necessary libraries
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import re
+import config  # Load temperature threshold and XPath values
 
 # Function to fetch the current temperature from the homepage
 def get_temperature(driver):
@@ -12,22 +12,21 @@ def get_temperature(driver):
     print(f" Current Temperature: {temperature}°C")
     return temperature
 
-# Function to select the product category (sunscreens or moisturizers) based on temperature
+# Select the correct product category based on the temperature
 def select_product(driver, temperature):
-    if temperature > 30:
-        driver.find_element(By.XPATH, "//button[text()='Buy sunscreens']").click()
+    if temperature >= config.TEMP:
+        driver.find_element(By.XPATH, config.BUY_SUNSCREENS_BTN).click()
         expected_title = "Sunscreens"
     else:
-        driver.find_element(By.XPATH, "//button[text()='Buy moisturizers']").click()
+        driver.find_element(By.XPATH, config.BUY_MOISTURIZERS_BTN).click()
         expected_title = "Moisturizers"
 
-    heading = driver.find_element(By.TAG_NAME, "h2").text
+    heading = driver.find_element(By.TAG_NAME, config.HEADING_TAG).text
     assert expected_title in heading, f"Expected '{expected_title}', but got '{heading}'"
     print(f" Navigated to {heading} page")
 
-# Function to find and add the lowest priced product on the page to the cart
+# Add the lowest priced product on the page to the cart
 def add_lowest_priced_item_to_cart(driver):
-    """Find and add the lowest priced product to the cart and print its name."""
     items = driver.find_elements(By.XPATH, "//p[contains(text(),'Price')]/..")
     lowest_price = float('inf')
     lowest_button = None
@@ -50,9 +49,8 @@ def add_lowest_priced_item_to_cart(driver):
 
     return lowest_price, product_name
 
-# Function to handle the payment process using dummy Stripe credentials
+# Handle payment with dummy Stripe details
 def complete_payment(driver):
-    """Handle payment process using dummy Stripe credentials."""
     driver.find_element(By.XPATH, "//button[contains(text(),'Cart')]").click()
     driver.find_element(By.CSS_SELECTOR, "button.stripe-button-el").click()
 
@@ -73,7 +71,7 @@ def complete_payment(driver):
     print(f" Payment Confirmation: {success_msg.strip()}")
     print(f" Final URL: {driver.current_url}")
 
-# ---------- Main Script ----------
+# ---------- Main Automation Flow ----------
 driver = webdriver.Chrome()
 driver.maximize_window()
 driver.implicitly_wait(10)
