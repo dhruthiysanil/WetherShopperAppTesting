@@ -29,6 +29,3 @@ HEADING_TAG = "h2"
 PRODUCT_CONTAINER = "//p[contains(text(),'Price')]/.."
 PRODUCT_PRICE = "./p[contains(text(),'Price')]"
 PRODUCT_NAME = "./p[1]"
-
-# Store latest fetched temperature
-TEMPERATURE = None
