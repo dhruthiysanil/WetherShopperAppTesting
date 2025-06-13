@@ -2,12 +2,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import re
-import config  # Load temperature threshold and XPath values
+import config  # Load temperature value and XPath values
 
 # Function to fetch the current temperature from the homepage
 def get_temperature(driver):
-    driver.get("https://weathershopper.pythonanywhere.com/")
-    temp_text = driver.find_element(By.ID, "temperature").text
+    driver.get(config.BASE_URL)
+    temp_text = driver.find_element(By.ID, config.TEMPERATURE_ID).text
     temperature = int(re.sub(r'\D', '', temp_text))
     print(f" Current Temperature: {temperature}°C")
     return temperature
@@ -27,51 +27,52 @@ def select_product(driver, temperature):
 
 # Add the lowest priced product on the page to the cart
 def add_lowest_priced_item_to_cart(driver):
-    items = driver.find_elements(By.XPATH, "//p[contains(text(),'Price')]/..")
+    items = driver.find_elements(By.XPATH, config.PRODUCT_CONTAINER)
     lowest_price = float('inf')
     lowest_button = None
     product_name = ""
 
     for item in items:
-        price_text = item.find_element(By.XPATH, "./p[contains(text(),'Price')]").text
+        price_text = item.find_element(By.XPATH, config.PRODUCT_PRICE).text
         price = int(price_text.split()[-1])
-        
+
         if price < lowest_price:
             lowest_price = price
             lowest_button = item.find_element(By.TAG_NAME, "button")
-            product_name = item.find_element(By.XPATH, "./p[1]").text
+            product_name = item.find_element(By.XPATH, config.PRODUCT_NAME).text
 
     if lowest_button:
         lowest_button.click()
         print(f" Added lowest priced product to cart: '{product_name}' for Rs. {lowest_price}")
     else:
-        print("No product button found.")
+        print(" No product button found.")
 
     return lowest_price, product_name
 
-# Handle payment with dummy Stripe details
+# Handle payment with dummy details
 def complete_payment(driver):
-    driver.find_element(By.XPATH, "//button[contains(text(),'Cart')]").click()
-    driver.find_element(By.CSS_SELECTOR, "button.stripe-button-el").click()
+    driver.find_element(By.XPATH, config.CART_BTN).click()
+    driver.find_element(By.CSS_SELECTOR, config.STRIPE_BTN).click()
 
-    stripe_frame = driver.find_element(By.CSS_SELECTOR, "iframe[name='stripe_checkout_app']")
+    stripe_frame = driver.find_element(By.CSS_SELECTOR, config.STRIPE_IFRAME)
     driver.switch_to.frame(stripe_frame)
 
-    driver.find_element(By.ID, "email").send_keys("dhruthir@gmail.com")
-    driver.execute_script("""
-        document.querySelector("input#card_number").value = "4242 4242 4242 4242";
-        document.querySelector("input#cc-exp").value = "12/25";
-        document.querySelector("input#cc-csc").value = "123";
+    driver.find_element(By.ID, "email").send_keys(config.EMAIL)
+    driver.execute_script(f"""
+        document.querySelector("input#card_number").value = "{config.CARD_NUMBER}";
+        document.querySelector("input#cc-exp").value = "{config.EXPIRY}";
+        document.querySelector("input#cc-csc").value = "{config.CVC}";
     """)
-    print(" Dummy card details filled")    
-    driver.find_element(By.XPATH, "//span[contains(text(),'Pay INR')]").click()
+    print(" Dummy card details filled")
+
+    driver.find_element(By.XPATH, config.STRIPE_PAY_BTN).click()
     driver.switch_to.default_content()
 
-    success_msg = driver.find_element(By.XPATH, "//*[contains(text(),'success')]").text
+    success_msg = driver.find_element(By.XPATH, config.SUCCESS_MSG).text
     print(f" Payment Confirmation: {success_msg.strip()}")
     print(f" Final URL: {driver.current_url}")
 
-# ---------- Main Automation Flow ----------
+# ---------- Main ----------
 driver = webdriver.Chrome()
 driver.maximize_window()
 driver.implicitly_wait(10)
