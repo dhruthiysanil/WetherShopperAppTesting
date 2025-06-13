@@ -1,4 +1,11 @@
-"""Automated Selenium script to buy sunscreen or moisturizer based on temperature.Adds the Lowest priced product to the cart and proceed with payment by adding dmmy details after confirmation of payment it also shows the payment successfull message"""
+"""
+Automated Selenium script to:
+- Fetch temperature from the Weather Shopper homepage.
+- Navigate to the Sunscreen or Moisturizer page based on temperature.
+- Add the lowest priced item to the cart.
+- Proceed to checkout using Stripe with dummy test data.
+- Confirm the successful payment message after completion.
+"""
 
 import re
 from selenium import webdriver
@@ -6,8 +13,8 @@ from selenium.webdriver.common.by import By
 import config
 
 
+# Fetch the current temperature from the homepage.
 def get_temperature(driver):
-    """Fetch the current temperature from the homepage."""
     driver.get(config.BASE_URL)
     temp_text = driver.find_element(By.ID, config.TEMPERATURE_ID).text
     temperature = int(re.sub(r'\D', '', temp_text))
@@ -15,8 +22,8 @@ def get_temperature(driver):
     return temperature
 
 
+# Select the product category (Sunscreen or Moisturizer) based on temperature.
 def select_product(driver, temperature):
-    """Select the product category based on temperature and validate page navigation."""
     if temperature >= config.TEMP:
         driver.find_element(By.XPATH, config.BUY_SUNSCREENS_BTN).click()
         expected_title = "Sunscreens"
@@ -29,8 +36,8 @@ def select_product(driver, temperature):
     print(f"Navigated to {heading} page")
 
 
+# Find and add the lowest-priced product from the product list to the cart.
 def add_lowest_priced_item_to_cart(driver):
-    """Find and add the lowest-priced product to the cart."""
     items = driver.find_elements(By.XPATH, config.PRODUCT_CONTAINER)
     lowest_price = float('inf')
     lowest_button = None
@@ -54,8 +61,8 @@ def add_lowest_priced_item_to_cart(driver):
     return lowest_price, product_name
 
 
+# Proceed to payment and simulate Stripe payment using dummy test data.
 def complete_payment(driver):
-    """Proceed to payment and simulate Stripe payment using test data."""
     driver.find_element(By.XPATH, config.CART_BTN).click()
     driver.find_element(By.CSS_SELECTOR, config.STRIPE_BTN).click()
 
@@ -79,8 +86,12 @@ def complete_payment(driver):
     print(f"Final URL: {driver.current_url}")
 
 
+# Main function to execute the end-to-end automation flow:
+# - Temperature fetch
+# - Product selection
+# - Cart addition
+# - Payment simulation
 def main():
-    """Main function to execute the automation flow."""
     options = webdriver.ChromeOptions()
     options.add_argument("--log-level=3")  # Suppress most Chrome logs
 
