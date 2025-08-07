@@ -1,32 +1,46 @@
-name: Python Selenium Test
+name: Run Selenium Buy Script
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  test:
+  run-buy-script:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repo
       uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.10
+        python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
-        pip install selenium
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Install Chrome
       run: |
         sudo apt-get update
-        sudo apt-get install -y chromium-browser chromium-chromedriver
-        sudo ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
+        sudo apt-get install -y wget unzip xvfb libxi6 libgconf-2-4
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
 
-    - name: Run Selenium test
-      env:
-        PYTHONUNBUFFERED: 1
+    - name: Install ChromeDriver
       run: |
-        python Buy.py
+        CHROME_VERSION=$(google-chrome --version | grep -oP "\d+\.\d+\.\d+")
+        CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+        wget -N https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        chmod +x chromedriver
+        sudo mv -f chromedriver /usr/local/bin/chromedriver
+
+    - name: Run Buy.py script
+      run: python Buy.py
