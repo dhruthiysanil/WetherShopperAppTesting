@@ -93,10 +93,14 @@ def complete_payment(driver):
 # - Payment simulation
 def main():
     options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run in headless mode for CI
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")  # Set window size instead of maximize
     options.add_argument("--log-level=3")  # Suppress most Chrome logs
 
     driver = webdriver.Chrome(options=options)
-    driver.maximize_window()
     driver.implicitly_wait(10)
 
     try:
@@ -109,7 +113,6 @@ def main():
         print("Error occurred:", error)
 
     finally:
-        input("Press Enter to exit and close browser...")
         driver.quit()
 
 
