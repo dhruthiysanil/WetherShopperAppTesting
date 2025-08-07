@@ -1,4 +1,4 @@
-name: Run test_exampl_form
+name: Run Buy Script
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  run-buy-script:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -34,26 +34,20 @@ jobs:
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
-      - name: Install ChromeDriver matching Chrome version
+      - name: Install ChromeDriver
         run: |
-          sudo apt-get install -y jq curl
-          CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+')
-          CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" \
-            | jq -r --arg ver "$CHROME_VERSION" '
-              .channels.Stable.downloads.chromedriver[] 
-              | select(.platform == "linux64") 
-              | .url')
+          sudo apt-get install -y curl jq
+          CHROMEDRIVER_URL=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json \
+            | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform == "linux64") | .url')
           wget "$CHROMEDRIVER_URL" -O chromedriver.zip
           unzip chromedriver.zip
           sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
           chmod +x /usr/local/bin/chromedriver
-          chromedriver --version
 
-      - name: Run Selenium Tests in Headless Mode
+      - name: Run Buy.py
         env:
           DISPLAY: :99
         run: |
           Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-          sleep 3  # wait for Xvfb to start
-          pytest tests/Buy.py --browser headless-chrome
-      
+          sleep 3
+          python Buy.py
